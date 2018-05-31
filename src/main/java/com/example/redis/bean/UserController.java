@@ -1,13 +1,13 @@
 package com.example.redis.bean;
 
+import com.example.redis.queue.MessagePublisher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.data.redis.listener.adapter.MessageListenerAdapter;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/user")
@@ -17,6 +17,12 @@ public class UserController {
     // inject the actual template
     @Autowired
     private RedisTemplate<String, String> template;
+    @Autowired
+    MessagePublisher messagePublisher;
+     
+
+    public UserController() {
+    }
 
     @RequestMapping(path = {"addUser", "add"}, method = {RequestMethod.POST})
     public String addUser(User user) {
@@ -42,6 +48,11 @@ public class UserController {
     @RequestMapping("/add/{key}/{value}")
     public void setValue(@PathVariable String key, @PathVariable String value) {
         template.opsForValue().set(key, value);
+    }
+
+    @RequestMapping("/push")
+    public void pushMessage(@RequestParam("message") String message) {
+        messagePublisher.publish(UUID.randomUUID().toString() + ":" + message);
     }
 }
 
